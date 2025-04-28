@@ -37,6 +37,8 @@ exports.downloadVideo = (req, res, next) => {
 
 const downloadeVideoFile = async (videoId, format, quality) => {
   try {
+    const myCookie = process.env.COOKIE;
+
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
     if (!format) {
@@ -52,8 +54,7 @@ const downloadeVideoFile = async (videoId, format, quality) => {
       noCheckCertificates: true,
       noWarnings: true,
       preferFreeFormats: true,
-      cookies:"/etc/secrets/youtube_cookies.txt",
-      addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+      addHeader: ["referer:youtube.com", "user-agent:googlebot" , f`cookie:${myCookie}`],
     }).then((info) => {
       const audioFormats = info.formats.filter((format) => {
         return (
