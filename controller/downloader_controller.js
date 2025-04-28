@@ -13,7 +13,9 @@ exports.downloadVideo = (req, res, next) => {
   const { videoId, format, quality } = req.query;
 
   if (!videoId) {
-    return res.status(400).send({ success: false, message: "videoId param is not provided" });
+    return res
+      .status(400)
+      .send({ success: false, message: "videoId param is not provided" });
   }
 
   downloadeVideoFile(videoId, format, quality)
@@ -34,16 +36,15 @@ exports.downloadVideo = (req, res, next) => {
 };
 
 const downloadeVideoFile = async (videoId, format, quality) => {
-
   try {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
     if (!format) {
-      format = "mp4a"
+      format = "mp4a";
     }
 
     if (!quality) {
-      quality = "medium"
+      quality = "medium";
     }
 
     return youtubedl(videoUrl, {
@@ -51,21 +52,63 @@ const downloadeVideoFile = async (videoId, format, quality) => {
       noCheckCertificates: true,
       noWarnings: true,
       preferFreeFormats: true,
-      addHeader: ['referer:youtube.com', 'user-agent:googlebot']
-    }).then(info => {
-
-      const audioFormats = info.formats.filter(
-        (format) => {
-          return (format.acodec && format.acodec !== "none" && format.vcodec === "none")
-        }
-      );
+      cookies:"/etc/secrets/youtube_cookies.txt",
+      addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+    }).then((info) => {
+      const audioFormats = info.formats.filter((format) => {
+        return (
+          format.acodec && format.acodec !== "none" && format.vcodec === "none"
+        );
+      });
       return audioFormats;
-
-    })
-
-
+    });
   } catch (err) {
     // Rethrow so the caller can handle it
     throw new Error(`Could not retrieve video info: ${err.message}`);
+  }
+};
+
+/**
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+
+exports.videoInfo = (req, res, next) => {
+  const { videoId } = req.query;
+
+  if (!videoId) {
+    return res
+      .status(400)
+      .send({ success: false, message: "videoId param is not provided" });
+  }
+
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  try {
+    youtubedl(videoUrl, {
+      dumpSingleJson: true,
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+      addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+    }).then((info) => {
+      
+
+      return res.status(200).send({
+        success: true,
+        data: {
+          videoId: info.id,
+          title: info.title,
+          channel: info.channel,
+          thumbnail: info.channel,
+        },
+      });
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to get video information",
+      error: error.message,
+    });
   }
 };

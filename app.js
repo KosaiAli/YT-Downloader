@@ -26,6 +26,7 @@ app.use(
 app.use(express.json());
 
 app.get("/downloadVideo", downloaderController.downloadVideo);
+app.get("/videoInfo",downloaderController.videoInfo);
 
 app.get("/", controller.homePage);
 
