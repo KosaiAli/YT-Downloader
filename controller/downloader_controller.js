@@ -36,6 +36,17 @@ exports.downloadVideo = (req, res, next) => {
 };
 
 const downloadeVideoFile = async (videoId, format, quality) => {
+  const COOKIE_SOURCE = "/etc/secrets/youtube_cookies.txt";
+  const COOKIE_DIR = "/tmp";
+  const COOKIE_COPY = `${COOKIE_DIR}/youtube_cookies_tmp.txt`;
+
+  if (!fs.existsSync(COOKIE_DIR)) {
+    fs.mkdirSync(COOKIE_DIR, { recursive: true }); // create the tmp directory
+  }
+
+  if (fs.existsSync(COOKIE_SOURCE)) {
+    fs.copyFileSync(COOKIE_SOURCE, COOKIE_COPY);
+  }
   try {
     const myCookie = process.env.COOKIE;
 
@@ -55,8 +66,10 @@ const downloadeVideoFile = async (videoId, format, quality) => {
       noWarnings: true,
       preferFreeFormats: true,
       addHeader: ["referer:youtube.com", "user-agent:googlebot"],
-      cookies: "/etc/secrets/youtube_cookies.txt", 
+      cookies: COOKIE_COPY,
     }).then((info) => {
+      fs.unlinkSync(COOKIE_COPY);
+
       const audioFormats = info.formats.filter((format) => {
         return (
           format.acodec && format.acodec !== "none" && format.vcodec === "none"
