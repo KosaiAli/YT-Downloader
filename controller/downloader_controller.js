@@ -3,6 +3,8 @@ const express = require("express");
 const fs = require("fs");
 const { log } = require("util");
 const { info } = require("console");
+const path = require("path");
+const { randomUUID } = require("crypto");
 
 var currentDownloadTasks = new Set();
 /**
@@ -38,7 +40,10 @@ exports.downloadVideo = (req, res, next) => {
 const downloadeVideoFile = async (videoId, format, quality) => {
   const COOKIE_SOURCE = "/etc/secrets/youtube_cookies.txt";
   const COOKIE_DIR = "/tmp";
-  const COOKIE_COPY = `${COOKIE_DIR}/youtube_cookies_tmp.txt`;
+  const COOKIE_COPY = path.join(
+    COOKIE_DIR,
+    `youtube_cookies_${randomUUID()}.txt`
+  );
 
   if (!fs.existsSync(COOKIE_DIR)) {
     fs.mkdirSync(COOKIE_DIR, { recursive: true }); // create the tmp directory
@@ -89,6 +94,20 @@ const downloadeVideoFile = async (videoId, format, quality) => {
  */
 
 exports.videoInfo = (req, res, next) => {
+  const COOKIE_SOURCE = "/etc/secrets/youtube_cookies.txt";
+  const COOKIE_DIR = "/tmp";
+  const COOKIE_COPY = path.join(
+    COOKIE_DIR,
+    `youtube_cookies_${randomUUID()}.txt`
+  );
+
+  if (!fs.existsSync(COOKIE_DIR)) {
+    fs.mkdirSync(COOKIE_DIR, { recursive: true }); // create the tmp directory
+  }
+
+  if (fs.existsSync(COOKIE_SOURCE)) {
+    fs.copyFileSync(COOKIE_SOURCE, COOKIE_COPY);
+  }
   const { videoId } = req.query;
 
   if (!videoId) {
@@ -106,8 +125,10 @@ exports.videoInfo = (req, res, next) => {
       noWarnings: true,
       preferFreeFormats: true,
       addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+      cookies: COOKIE_COPY,
     }).then((info) => {
       console.log(info);
+      fs.unlinkSync(COOKIE_COPY);
 
       return res.status(200).send({
         success: true,
