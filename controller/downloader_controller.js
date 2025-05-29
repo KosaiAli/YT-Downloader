@@ -138,7 +138,7 @@ exports.videoInfo = (req, res, next) => {
           videoId: info.id,
           title: info.title,
           channel: info.channel,
-          thumbnail: info.channel,
+          thumbnail: info.thumbnail,
         },
       });
     });
