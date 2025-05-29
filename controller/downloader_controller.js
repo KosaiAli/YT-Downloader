@@ -54,7 +54,8 @@ const downloadeVideoFile = async (videoId, format, quality) => {
       noCheckCertificates: true,
       noWarnings: true,
       preferFreeFormats: true,
-      addHeader: ["referer:youtube.com", "user-agent:googlebot" , `cookie:${myCookie}`],
+      addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+      cookies: "/etc/secrets/youtube_cookies.txt", 
     }).then((info) => {
       const audioFormats = info.formats.filter((format) => {
         return (
@@ -93,7 +94,7 @@ exports.videoInfo = (req, res, next) => {
       preferFreeFormats: true,
       addHeader: ["referer:youtube.com", "user-agent:googlebot"],
     }).then((info) => {
-      
+      console.log(info);
 
       return res.status(200).send({
         success: true,
