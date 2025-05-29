@@ -84,6 +84,7 @@ const downloadeVideoFile = async (videoId, format, quality) => {
     });
   } catch (err) {
     // Rethrow so the caller can handle it
+    fs.unlinkSync(COOKIE_COPY,);
     throw new Error(`Could not retrieve video info: ${err.message}`);
   }
 };
@@ -94,6 +95,14 @@ const downloadeVideoFile = async (videoId, format, quality) => {
  */
 
 exports.videoInfo = (req, res, next) => {
+  const { videoId } = req.query;
+
+  if (!videoId) {
+    return res
+      .status(400)
+      .send({ success: false, message: "videoId param is not provided" });
+  }
+
   const COOKIE_SOURCE = "/etc/secrets/youtube_cookies.txt";
   const COOKIE_DIR = "/tmp";
   const COOKIE_COPY = path.join(
@@ -107,13 +116,6 @@ exports.videoInfo = (req, res, next) => {
 
   if (fs.existsSync(COOKIE_SOURCE)) {
     fs.copyFileSync(COOKIE_SOURCE, COOKIE_COPY);
-  }
-  const { videoId } = req.query;
-
-  if (!videoId) {
-    return res
-      .status(400)
-      .send({ success: false, message: "videoId param is not provided" });
   }
 
   const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
@@ -141,6 +143,7 @@ exports.videoInfo = (req, res, next) => {
       });
     });
   } catch (error) {
+    fs.unlinkSync(COOKIE_COPY);
     res.status(500).send({
       success: false,
       message: "Failed to get video information",
